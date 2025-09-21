@@ -96,10 +96,15 @@ export default function Footer() {
 
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              © 2024 Huawei ICT Cloud Track Study App. All rights reserved.
-            </p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
+            <div className="text-center md:text-left">
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                © 2024 Huawei ICT Cloud Track Study App. All rights reserved.
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                Built with ❤️ by <span className="text-blue-600 dark:text-blue-400 font-medium">Inioluwa Atanda</span>
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm transition-colors duration-200">
                 Privacy Policy
               </a>

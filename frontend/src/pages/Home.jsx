@@ -49,28 +49,28 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-800 dark:to-blue-900">
         <div className="absolute inset-0 bg-black opacity-10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight">
               Master Huawei Cloud Computing
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl md:text-2xl text-blue-100 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
               Comprehensive study platform for HCIA and HCIP Cloud Computing certifications
               with interactive learning and practice exams
             </p>
             
             {user && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
                 <Link
                   to="/study"
-                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 transition-colors duration-200"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 transition-colors duration-200"
                 >
                   Start Studying
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
                   to="/exam"
-                  className="inline-flex items-center px-8 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-blue-600 transition-colors duration-200"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-white hover:text-blue-600 transition-colors duration-200"
                 >
                   Take Practice Exam
                   <FileText className="ml-2 h-5 w-5" />
@@ -96,22 +96,22 @@ export default function Home() {
       )}
 
       {/* Stats Section */}
-      <div className="bg-gray-50 dark:bg-gray-800 py-16">
+      <div className="bg-gray-50 dark:bg-gray-800 py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {stats.map((stat, index) => {
               const Icon = stat.icon
               return (
                 <div key={index} className="text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="p-3 bg-blue-600 rounded-full">
-                      <Icon className="h-6 w-6 text-white" />
+                  <div className="flex justify-center mb-3 sm:mb-4">
+                    <div className="p-2 sm:p-3 bg-blue-600 rounded-full">
+                      <Icon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
                     {stat.value}
                   </div>
-                  <div className="text-gray-600 dark:text-gray-400">
+                  <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                     {stat.label}
                   </div>
                 </div>
@@ -122,39 +122,39 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <div className="py-16">
+      <div className="py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
               Everything You Need to Succeed
             </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-4">
               Our platform provides comprehensive tools and resources to help you master
               Huawei Cloud Computing concepts and pass your certification exams.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon
               return (
                 <div
                   key={index}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-200"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-8 hover:shadow-xl transition-shadow duration-200"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-lg mb-6">
-                    <Icon className="h-6 w-6 text-white" />
+                  <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg mb-4 sm:mb-6">
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
                     {feature.description}
                   </p>
                   {user && (
                     <Link
                       to={feature.link}
-                      className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                      className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm sm:text-base"
                     >
                       Get Started
                       <ArrowRight className="ml-2 h-4 w-4" />

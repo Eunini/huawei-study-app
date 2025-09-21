@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 export default function Navbar({ darkMode, toggleDarkMode }) {
+  console.log('Navbar received props:', { darkMode, toggleDarkMode: typeof toggleDarkMode })
   const { user, signOut } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -44,14 +45,17 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
+              <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
                 Huawei ICT Cloud
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white sm:hidden">
+                Huawei ICT
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             {user && navItems.map((item) => {
               const Icon = item.icon
               return (
@@ -65,17 +69,20 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
+                  <span className="hidden xl:inline">{item.label}</span>
                 </Link>
               )
             })}
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Dark mode toggle */}
             <button
-              onClick={toggleDarkMode}
+              onClick={() => {
+                console.log('Dark mode button clicked')
+                toggleDarkMode()
+              }}
               className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
               aria-label="Toggle dark mode"
             >
@@ -88,22 +95,22 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
 
             {/* User actions */}
             {user && (
-              <div className="hidden md:flex items-center space-x-2">
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Welcome, {user.user_metadata?.name || user.email}
+              <div className="hidden lg:flex items-center space-x-2">
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                  Welcome, {user.name || user.email}
                 </span>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="flex items-center space-x-1 px-3 py-2 rounded-md text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
+                  <span className="hidden xl:inline">Sign Out</span>
                 </button>
               </div>
             )}
 
             {/* Mobile menu button */}
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -121,7 +128,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
 
         {/* Mobile Navigation */}
         {isMenuOpen && user && (
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-200 dark:border-gray-700">
               {navItems.map((item) => {
                 const Icon = item.icon
@@ -145,7 +152,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
                 <div className="px-3 py-2">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
-                    {user.user_metadata?.name || user.email}
+                    {user.name || user.email}
                   </p>
                 </div>
                 <button
