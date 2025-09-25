@@ -3,22 +3,18 @@ import { RotateCcw, ArrowLeft, ArrowRight, Eye, EyeOff } from 'lucide-react'
 
 export default function Flashcard({ flashcard, onNext, onPrevious, currentIndex, totalCards }) {
   const [isFlipped, setIsFlipped] = useState(false)
-  const [showAnswer, setShowAnswer] = useState(false)
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped)
-    setShowAnswer(!showAnswer)
   }
 
   const handleNext = () => {
     setIsFlipped(false)
-    setShowAnswer(false)
     onNext()
   }
 
   const handlePrevious = () => {
     setIsFlipped(false)
-    setShowAnswer(false)
     onPrevious()
   }
 
@@ -42,16 +38,17 @@ export default function Flashcard({ flashcard, onNext, onPrevious, currentIndex,
       </div>
 
       {/* Flashcard */}
-      <div className="relative">
+      <div className="relative h-[300px] perspective-1000">
         <div
-          className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 min-h-[300px] flex items-center justify-center cursor-pointer transform transition-transform duration-300 ${
+          className={`relative w-full h-full transition-transform duration-700 transform-style-preserve-3d cursor-pointer ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
           onClick={handleFlip}
         >
-          <div className="text-center">
-            {!showAnswer ? (
-              <div>
+          {/* Front Face */}
+          <div className="absolute inset-0 w-full h-full backface-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 h-full flex items-center justify-center">
+              <div className="text-center">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Question
                 </h3>
@@ -71,8 +68,13 @@ export default function Flashcard({ flashcard, onNext, onPrevious, currentIndex,
                   </button>
                 </div>
               </div>
-            ) : (
-              <div>
+            </div>
+          </div>
+
+          {/* Back Face */}
+          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 h-full flex items-center justify-center">
+              <div className="text-center">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Answer
                 </h3>
@@ -92,7 +94,7 @@ export default function Flashcard({ flashcard, onNext, onPrevious, currentIndex,
                   </button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -133,7 +135,6 @@ export default function Flashcard({ flashcard, onNext, onPrevious, currentIndex,
         <button
           onClick={() => {
             setIsFlipped(false)
-            setShowAnswer(false)
           }}
           className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
         >

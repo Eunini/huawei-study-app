@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import AuthProvider from './context/AuthContext'
+import ThemeProvider from './context/ThemeContext'
 import { useAuth } from './hooks/useAuth'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -45,43 +46,11 @@ const PublicRoute = ({ children }) => {
 }
 
 function AppContent() {
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('darkMode')
-      console.log('Initial dark mode from localStorage:', stored)
-      return stored === 'true'
-    }
-    console.log('Window not available, defaulting to false')
-    return false
-  })
-
-  useEffect(() => {
-    console.log('Dark mode useEffect triggered, darkMode:', darkMode)
-    if (darkMode) {
-      document.documentElement.classList.add('dark')
-      console.log('Added dark class to documentElement')
-    } else {
-      document.documentElement.classList.remove('dark')
-      console.log('Removed dark class from documentElement')
-    }
-    localStorage.setItem('darkMode', darkMode.toString())
-    console.log('Saved to localStorage:', darkMode.toString())
-  }, [darkMode])
-
-  const toggleDarkMode = () => {
-    console.log('Dark mode toggle clicked, current state:', darkMode)
-    setDarkMode(prevMode => {
-      const newMode = !prevMode
-      console.log('Setting dark mode to:', newMode)
-      return newMode
-    })
-  }
-
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
       <Router>
         <div className="flex flex-col min-h-screen">
-          <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+          <Navbar />
           
           <main className="flex-grow">
             <Routes>
@@ -159,9 +128,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

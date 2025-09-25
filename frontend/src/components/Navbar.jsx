@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 import { 
   Moon, 
   Sun, 
@@ -13,8 +14,8 @@ import {
   X
 } from 'lucide-react'
 
-export default function Navbar({ darkMode, toggleDarkMode }) {
-  console.log('Navbar received props:', { darkMode, toggleDarkMode: typeof toggleDarkMode })
+export default function Navbar() {
+  const { darkMode, toggleDarkMode } = useTheme()
   const { user, signOut } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -79,12 +80,10 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Dark mode toggle */}
             <button
-              onClick={() => {
-                console.log('Dark mode button clicked')
-                toggleDarkMode()
-              }}
+              onClick={toggleDarkMode}
               className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-              aria-label="Toggle dark mode"
+              aria-label="Toggle dark mode (Ctrl+Shift+T)"
+              title="Toggle dark mode (Ctrl+Shift+T)"
             >
               {darkMode ? (
                 <Sun className="w-5 h-5" />

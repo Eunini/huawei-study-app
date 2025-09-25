@@ -2,13 +2,18 @@ from pydantic_settings import BaseSettings
 from typing import List
 
 class Settings(BaseSettings):
-    # Supabase Configuration
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
-    SUPABASE_JWT_SECRET: str
+    # Supabase Configuration (optional for development)
+    SUPABASE_URL: str = "https://dummy.supabase.co"
+    SUPABASE_KEY: str = "dummy-key"
+    SUPABASE_JWT_SECRET: str = "dummy-secret"
     
     # Database Configuration
-    DATABASE_URL: str = ""
+    DATABASE_URL: str = "sqlite:///./huawei_study.db"
+    
+    # Ollama Configuration
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1:8b"
+    OLLAMA_TIMEOUT: int = 120
     
     # CORS Configuration
     ALLOWED_ORIGINS: List[str] = [
@@ -18,7 +23,7 @@ class Settings(BaseSettings):
     ]
     
     # JWT Configuration
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    SECRET_KEY: str = "gDBrlC8PfEZ6tB7xABi3IOrFGR4pDzdf"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     

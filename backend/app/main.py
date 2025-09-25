@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, study, exam, results
+from app.routes import auth, study, exam, results, ai, odfs
 from app.config import settings
 
 # Create FastAPI app
@@ -24,6 +24,8 @@ app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(study.router, prefix="/api/study", tags=["study"])
 app.include_router(exam.router, prefix="/api/exam", tags=["exam"])
 app.include_router(results.router, prefix="/api/results", tags=["results"])
+app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
+app.include_router(odfs.router, prefix="/api/odfs", tags=["ODFS Content"])
 
 @app.get("/")
 async def root():

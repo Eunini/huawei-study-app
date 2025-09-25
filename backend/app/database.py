@@ -1,9 +1,22 @@
-from supabase import create_client, Client
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+from typing import Generator
 from app.config import settings
 
-# Initialize Supabase client
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+# Create SQLite engine
+engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
 
-def get_supabase_client() -> Client:
-    """Get Supabase client instance"""
-    return supabase
+# Create SessionLocal class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base class for models
+Base = declarative_base()
+
+def get_db() -> Generator[Session, None, None]:
+    """Dependency to get database session"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
