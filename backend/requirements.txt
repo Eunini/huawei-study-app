@@ -16,8 +16,8 @@ langchain==0.2.16
 langchain-community==0.2.16
 sentence-transformers==3.0.1
 chromadb==0.5.5
-numpy==2.3.3
-pypdf2==3.0.1
+numpy==1.26.4
+pypdf==4.0.1
 markdown==3.7
 
 # Content processing

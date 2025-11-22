@@ -5,6 +5,7 @@ A comprehensive study platform for Huawei Cloud Computing certifications (HCIA a
 ## 🚀 Features
 
 ### MVP Features (Current)
+
 - **Authentication**: Supabase Auth for signup/login with protected routes
 - **Study Mode**: Static study materials and flashcards
 - **Mock Exam Mode**: Practice exams with randomized questions and timer
@@ -12,6 +13,7 @@ A comprehensive study platform for Huawei Cloud Computing certifications (HCIA a
 - **Responsive UI**: Dark mode toggle, clean design with Tailwind CSS
 
 ### Future Enhancements
+
 - AI-powered study summaries and question generation
 - Advanced analytics and learning recommendations
 - More certification tracks (HCIE, other Huawei certifications)
@@ -20,6 +22,7 @@ A comprehensive study platform for Huawei Cloud Computing certifications (HCIA a
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **React 19** with **Vite** - Modern React development
 - **Tailwind CSS v4.1** - Latest version with Vite plugin
 - **React Router v7** - Client-side routing
@@ -28,6 +31,7 @@ A comprehensive study platform for Huawei Cloud Computing certifications (HCIA a
 - **Recharts** - Data visualization for analytics
 
 ### Backend
+
 - **Python FastAPI** - High-performance async API
 - **Supabase** - PostgreSQL database with real-time features
 - **Uvicorn** - ASGI server
@@ -35,10 +39,12 @@ A comprehensive study platform for Huawei Cloud Computing certifications (HCIA a
 - **Python-Jose** - JWT token handling
 
 ### Database & Auth
+
 - **Supabase** - PostgreSQL + Auth + Real-time
 - **Tables**: users, study_materials, questions, results, flashcards
 
 ### Hosting (Planned)
+
 - **Frontend**: Vercel (free tier)
 - **Backend**: Render (free tier)
 - **Database**: Supabase (free tier)
@@ -102,17 +108,20 @@ huawei-cloud/
 ## 🔧 Setup Instructions
 
 ### Prerequisites
+
 - **Node.js 18+** and npm
 - **Python 3.11+** and pip
 - **Supabase account** (free tier available)
 
 ### 1. Clone Repository
+
 ```bash
 git clone <your-repo-url>
 cd huawei-cloud
 ```
 
 ### 2. Supabase Setup
+
 1. Create a new project at [supabase.com](https://supabase.com)
 2. Get your project URL and anon key from Settings > API
 3. Create the following tables in your Supabase dashboard:
@@ -178,6 +187,7 @@ CREATE TABLE flashcards (
 ```
 
 ### 3. Frontend Setup
+
 ```bash
 cd frontend
 
@@ -199,6 +209,7 @@ npm run dev
 Frontend will be available at `http://localhost:5173`
 
 ### 4. Backend Setup
+
 ```bash
 cd backend
 
@@ -224,9 +235,24 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Backend API will be available at `http://localhost:8000`
 
+### Textbooks / Course PDFs
+
+If you want the web app to pick up course textbooks (PDFs), drop your PDF files directly into the repository root (the same folder as this README). The backend exposes two helpful endpoints:
+
+- `GET /api/study/textbooks` — returns a JSON list of available PDF files found in the repo root (filename, title, size and a URL)
+- `GET /api/study/textbooks/{filename}` — streams the PDF file (served as application/pdf). Example: `/api/study/textbooks/My-Course-Book.pdf`
+
+Additional helpful endpoints:
+
+- `POST /api/study/textbooks/import/{filename}` — extract text from the PDF and create a StudyMaterial record in the backend database. If the material already exists it will return the existing record.
+- `POST /api/study/textbooks/{filename}/generate` — run AI generation (summary, flashcards, quiz) from the extracted text and store the generated content in the database (requires Ollama configured). You can toggle generation options by using query params (generate_summary, generate_flashcards, generate_quiz) and set counts (num_flashcards, num_questions).
+
+The frontend Study page will automatically attempt to fetch `/api/study/textbooks` on startup and display any found PDFs as textbook materials (viewable in an embedded viewer or downloadable).
+
 ## 🎯 Current Status
 
 ### ✅ Completed
+
 - Project structure and configuration
 - Authentication system with Supabase
 - Frontend routing and protected routes
@@ -239,12 +265,14 @@ Backend API will be available at `http://localhost:8000`
 - Responsive design with Tailwind CSS
 
 ### 🔄 In Progress
+
 - Study Mode implementation
 - Mock Exam interface
 - Results Dashboard
 - Database schema setup
 
 ### 📋 Next Steps
+
 1. **Implement Study Mode** with flashcards and materials
 2. **Build Mock Exam interface** with timer and question cards
 3. **Create Results Dashboard** with charts and analytics
@@ -254,6 +282,7 @@ Backend API will be available at `http://localhost:8000`
 ## 🔑 Environment Variables
 
 ### Frontend (.env)
+
 ```env
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -261,6 +290,7 @@ VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
 ### Backend (.env)
+
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_anon_key
@@ -273,17 +303,20 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ## 🚢 Deployment
 
 ### Frontend (Vercel)
+
 1. Connect your GitHub repository to Vercel
 2. Set environment variables in Vercel dashboard
 3. Deploy automatically on push to main branch
 
 ### Backend (Render)
+
 1. Connect your GitHub repository to Render
 2. Create a new Web Service
 3. Set environment variables in Render dashboard
 4. Use the provided Dockerfile for deployment
 
 ### Database (Supabase)
+
 - Already hosted, just need to set up tables and RLS policies
 
 ## 📝 API Documentation

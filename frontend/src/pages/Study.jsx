@@ -18,15 +18,40 @@ export default function Study() {
   const [currentFlashcardIndex, setCurrentFlashcardIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState(null)
+  const [aiResults, setAiResults] = useState(null)
 
   useEffect(() => {
-    // Simulate API call
+    // Simulate API call + fetch real textbooks from backend
     setLoading(true)
-    setTimeout(() => {
-      setStudyMaterials(mockStudyMaterials)
-      setFlashcards(mockFlashcards)
-      setLoading(false)
-    }, 1000)
+
+    // Map backend textbooks (PDFs) into material entries so they're displayed in the materials grid
+    const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+
+    Promise.all([
+      // keep existing mock materials for offline/demo use
+      Promise.resolve(mockStudyMaterials),
+      Promise.resolve(mockFlashcards),
+      fetch(`${API_BASE}/api/study/textbooks`).then(r => r.ok ? r.json() : [])
+    ])
+      .then(([materials, cards, textbooks]) => {
+        // convert textbooks (pdfs) to material objects the UI understands
+        const pdfMaterials = (textbooks || []).map((t, idx) => ({
+          id: `pdf-${t.filename}-${idx}`,
+          title: t.title,
+          content: '',
+          description: 'PDF textbook',
+          category: 'Textbook',
+          readTime: Math.round((t.size_bytes || 0) / 1000) + ' KB',
+          difficulty: 'easy',
+          lastUpdated: new Date((t.last_modified || Date.now()) * 1000).toLocaleDateString(),
+          fileUrl: `${API_BASE}${t.url}`
+        }))
+
+        setStudyMaterials([...pdfMaterials, ...materials])
+        setFlashcards(cards)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
   const tabs = [
@@ -57,6 +82,68 @@ export default function Study() {
   const handleNextFlashcard = () => {
     if (currentFlashcardIndex < filteredFlashcards.length - 1) {
       setCurrentFlashcardIndex(currentFlashcardIndex + 1)
+    }
+  }
+
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+
+  async function handleImportMaterial(material) {
+    if (!material.fileUrl) return
+    setLoading(true)
+    try {
+      // extract filename from fileUrl
+      const urlParts = material.fileUrl.split('/')
+      const filename = decodeURIComponent(urlParts[urlParts.length - 1])
+
+      const resp = await fetch(`${API_BASE}/api/study/textbooks/import/${filename}`, {
+        method: 'POST'
+      })
+
+      if (!resp.ok) throw new Error('Import failed')
+      const json = await resp.json()
+
+      // update the selected material with the new content
+      const updated = {
+        ...material,
+        id: json.id,
+        title: json.title,
+        content: json.content,
+        description: json.description
+      }
+
+      setSelectedMaterial(updated)
+      setStudyMaterials(prev => prev.map(m => (m.fileUrl === material.fileUrl ? updated : m)))
+    } catch (err) {
+      console.error(err)
+      alert('Failed to import textbook: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleGenerateFromMaterial(material) {
+    if (!material.fileUrl) return
+    setLoading(true)
+    try {
+      const urlParts = material.fileUrl.split('/')
+      const filename = decodeURIComponent(urlParts[urlParts.length - 1])
+
+      const resp = await fetch(`${API_BASE}/api/study/textbooks/${filename}/generate`, {
+        method: 'POST'
+      })
+
+      if (!resp.ok) throw new Error('Generate failed')
+      const json = await resp.json()
+      setAiResults(json.generated || null)
+      if (json.material_id) {
+        // mark material as imported (replace or attach id)
+        setStudyMaterials(prev => prev.map(m => (m.fileUrl === material.fileUrl ? { ...m, id: json.material_id } : m)))
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Failed to generate AI content: ' + err.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -129,6 +216,9 @@ export default function Study() {
               <StudyMaterialDetail
                 material={selectedMaterial}
                 onBack={() => setSelectedMaterial(null)}
+                onImport={handleImportMaterial}
+                onGenerate={handleGenerateFromMaterial}
+                aiResults={aiResults}
               />
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Clock, ChevronRight } from 'lucide-react'
+import { Clock, ChevronRight, FileText } from 'lucide-react'
 
 export default function StudyMaterialCard({ material, onClick }) {
   return (
@@ -12,6 +12,11 @@ export default function StudyMaterialCard({ material, onClick }) {
           <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
             {material.category}
           </span>
+          {material.fileUrl && (
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-200 flex items-center gap-1">
+              <FileText className="w-3 h-3" /> PDF
+            </span>
+          )}
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
             material.difficulty === 'easy'
               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'

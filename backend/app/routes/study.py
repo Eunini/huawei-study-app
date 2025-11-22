@@ -1,297 +1,317 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Response
+from fastapi.responses import FileResponse
 from typing import List
-from app.schemas import StudyMaterialResponse, FlashcardResponse, UserResponse
-from app.routes.auth import get_current_user
-from app.database import get_supabase_client
-from supabase import Client
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.dependencies import get_current_user, get_optional_user, get_settings
+from app.schemas import StudyMaterialResponse, FlashcardResponse
+from app.models import User, StudyMaterial, AIGeneratedContent
+from datetime import datetime
+from app.services.pdf_service import extract_text_from_pdf
+from app.services.ollama_service import OllamaService
 import logging
+import os
+import json
+from typing import Dict
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Static study materials for MVP
-STATIC_STUDY_MATERIALS = [
-    {
-        "id": "1",
-        "title": "HCIA Cloud Computing Fundamentals",
-        "content": """
-        **Cloud Computing Overview**
-        
-        Cloud computing is a model for enabling ubiquitous, convenient, on-demand network access to a shared pool of configurable computing resources that can be rapidly provisioned and released with minimal management effort.
-        
-        **Key Characteristics:**
-        - On-demand self-service
-        - Broad network access
-        - Resource pooling
-        - Rapid elasticity
-        - Measured service
-        
-        **Service Models:**
-        - IaaS (Infrastructure as a Service)
-        - PaaS (Platform as a Service)
-        - SaaS (Software as a Service)
-        
-        **Deployment Models:**
-        - Public Cloud
-        - Private Cloud
-        - Hybrid Cloud
-        - Community Cloud
-        """,
-        "category": "HCIA",
-        "description": "Introduction to cloud computing concepts and models"
-    },
-    {
-        "id": "2",
-        "title": "Huawei Cloud Services Overview",
-        "content": """
-        **Huawei Cloud Core Services**
-        
-        **Compute Services:**
-        - ECS (Elastic Cloud Server)
-        - BMS (Bare Metal Server)
-        - Auto Scaling
-        - Function Graph (Serverless)
-        
-        **Storage Services:**
-        - OBS (Object Storage Service)
-        - EVS (Elastic Volume Service)
-        - SFS (Scalable File Service)
-        - CBR (Cloud Backup and Recovery)
-        
-        **Network Services:**
-        - VPC (Virtual Private Cloud)
-        - ELB (Elastic Load Balancer)
-        - NAT Gateway
-        - VPN Gateway
-        
-        **Database Services:**
-        - RDS (Relational Database Service)
-        - DDS (Document Database Service)
-        - GaussDB
-        - DCS (Distributed Cache Service)
-        """,
-        "category": "HCIA",
-        "description": "Overview of core Huawei Cloud services"
-    },
-    {
-        "id": "3",
-        "title": "HCIP Cloud Architecture Design",
-        "content": """
-        **Cloud Architecture Principles**
-        
-        **Design Principles:**
-        - Scalability and Elasticity
-        - High Availability and Fault Tolerance
-        - Security and Compliance
-        - Cost Optimization
-        - Performance Efficiency
-        
-        **Architecture Patterns:**
-        - Multi-tier Architecture
-        - Microservices Architecture
-        - Serverless Architecture
-        - Event-driven Architecture
-        
-        **Best Practices:**
-        - Use managed services when possible
-        - Implement proper monitoring and logging
-        - Design for failure
-        - Automate everything
-        - Follow security best practices
-        """,
-        "category": "HCIP",
-        "description": "Advanced cloud architecture design principles"
-    }
-]
-
-# Static flashcards for MVP
-STATIC_FLASHCARDS = [
-    {
-        "id": "1",
-        "front": "What are the 5 essential characteristics of cloud computing according to NIST?",
-        "back": "1. On-demand self-service\n2. Broad network access\n3. Resource pooling\n4. Rapid elasticity\n5. Measured service",
-        "category": "HCIA",
-        "difficulty": "easy"
-    },
-    {
-        "id": "2",
-        "front": "What is the difference between IaaS, PaaS, and SaaS?",
-        "back": "IaaS: Infrastructure as a Service - provides virtualized computing resources\nPaaS: Platform as a Service - provides platform and environment for developers\nSaaS: Software as a Service - provides complete software applications",
-        "category": "HCIA",
-        "difficulty": "medium"
-    },
-    {
-        "id": "3",
-        "front": "What is Huawei Cloud ECS?",
-        "back": "Elastic Cloud Server - Huawei's virtual machine service that provides scalable computing capacity in the cloud",
-        "category": "HCIA",
-        "difficulty": "easy"
-    },
-    {
-        "id": "4",
-        "front": "What are the main components of a VPC in Huawei Cloud?",
-        "back": "1. Subnets\n2. Route Tables\n3. Security Groups\n4. Network ACLs\n5. Internet Gateway\n6. NAT Gateway",
-        "category": "HCIP",
-        "difficulty": "medium"
-    },
-    {
-        "id": "5",
-        "front": "What is the difference between vertical and horizontal scaling?",
-        "back": "Vertical scaling: Increasing resources of existing instances (scale up)\nHorizontal scaling: Adding more instances to handle load (scale out)",
-        "category": "HCIP",
-        "difficulty": "hard"
-    }
-]
-
 @router.get("/materials", response_model=List[StudyMaterialResponse])
 async def get_study_materials(
-    category: str = None,
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Get study materials"""
-    try:
-        materials = STATIC_STUDY_MATERIALS
-        
-        if category:
-            materials = [m for m in materials if m["category"].lower() == category.lower()]
-        
-        return [
-            StudyMaterialResponse(
-                id=material["id"],
-                title=material["title"],
-                content=material["content"],
-                category=material["category"],
-                description=material["description"],
-                created_at="2024-01-01T00:00:00Z"
-            )
-            for material in materials
-        ]
-        
-    except Exception as e:
-        logger.error(f"Get study materials error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch study materials"
-        )
-
-@router.get("/materials/{material_id}", response_model=StudyMaterialResponse)
-async def get_study_material(
-    material_id: str,
-    current_user: UserResponse = Depends(get_current_user)
-):
-    """Get specific study material"""
-    try:
-        material = next((m for m in STATIC_STUDY_MATERIALS if m["id"] == material_id), None)
-        
-        if not material:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Study material not found"
-            )
-        
-        return StudyMaterialResponse(
-            id=material["id"],
-            title=material["title"],
-            content=material["content"],
-            category=material["category"],
-            description=material["description"],
-            created_at="2024-01-01T00:00:00Z"
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Get study material error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch study material"
-        )
+    """Get all study materials"""
+    # TODO: Implement study materials retrieval from database
+    return []
 
 @router.get("/flashcards", response_model=List[FlashcardResponse])
 async def get_flashcards(
-    category: str = None,
-    difficulty: str = None,
-    current_user: UserResponse = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Get flashcards"""
+    """Get all flashcards"""
+    # TODO: Implement flashcards retrieval from database
+    return []
+
+
+@router.get('/textbooks', response_model=List[Dict])
+async def list_textbooks(
+    current_user: User = Depends(get_optional_user),
+):
+    """List PDF textbooks found in the repo root directory.
+
+    Returns a simple metadata list with filename, title, size and last_modified.
+    """
+    # base repo root and configured textbooks folder
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    settings = get_settings()
+    textbooks_dir = os.path.join(repo_root, settings.TEXTBOOKS_FOLDER)
+
+    textbooks = []
     try:
-        flashcards = STATIC_FLASHCARDS
-        
-        if category:
-            flashcards = [f for f in flashcards if f["category"].lower() == category.lower()]
-        
-        if difficulty:
-            flashcards = [f for f in flashcards if f["difficulty"].lower() == difficulty.lower()]
-        
-        return [
-            FlashcardResponse(
-                id=flashcard["id"],
-                front=flashcard["front"],
-                back=flashcard["back"],
-                category=flashcard["category"],
-                difficulty=flashcard["difficulty"],
-                created_at="2024-01-01T00:00:00Z"
-            )
-            for flashcard in flashcards
-        ]
-        
+        # ensure folder exists
+        if not os.path.isdir(textbooks_dir):
+            return []
+
+        for entry in os.listdir(textbooks_dir):
+            if not entry.lower().endswith('.pdf'):
+                continue
+
+            file_path = os.path.join(textbooks_dir, entry)
+            if not os.path.isfile(file_path):
+                continue
+
+            stat = os.stat(file_path)
+            textbooks.append({
+                'filename': entry,
+                'title': os.path.splitext(entry)[0],
+                'size_bytes': stat.st_size,
+                'last_modified': stat.st_mtime,
+                'url': f"/api/study/textbooks/{entry}"
+            })
+
     except Exception as e:
-        logger.error(f"Get flashcards error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch flashcards"
+        logger.exception('Failed listing textbooks')
+        raise HTTPException(status_code=500, detail='Failed to list textbooks')
+
+    return textbooks
+
+
+@router.get('/textbooks/{filename}')
+async def get_textbook(filename: str, current_user: User = Depends(get_optional_user)):
+    """Return a PDF FileResponse for a given filename in the repository root.
+
+    Security: Only serve plain filenames (no path separators) and only .pdf files.
+    """
+    # Basic validation: disallow path separators
+    if '/' in filename or '\\' in filename:
+        raise HTTPException(status_code=400, detail='Invalid filename')
+
+    if not filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail='Only PDF files are supported')
+
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    settings = get_settings()
+    textbooks_dir = os.path.join(repo_root, settings.TEXTBOOKS_FOLDER)
+    file_path = os.path.join(textbooks_dir, filename)
+
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail='Textbook not found')
+
+    # Return the file as application/pdf
+    return FileResponse(path=file_path, media_type='application/pdf', filename=filename)
+
+
+@router.post('/textbooks/import/{filename}', response_model=StudyMaterialResponse)
+async def import_textbook(
+    filename: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_optional_user),
+    settings = Depends(get_settings),
+):
+    """Extract text from a PDF in the textbooks folder and create a StudyMaterial record.
+
+    If a StudyMaterial with the same title already exists, return that record instead of creating a duplicate.
+    """
+    # Validate filename
+    if '/' in filename or '\\' in filename:
+        raise HTTPException(status_code=400, detail='Invalid filename')
+
+    if not filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail='Only PDF files are supported')
+
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    textbooks_dir = os.path.join(repo_root, settings.TEXTBOOKS_FOLDER)
+    file_path = os.path.join(textbooks_dir, filename)
+
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail='Textbook not found')
+
+    # Determine a reasonable title
+    title = os.path.splitext(filename)[0]
+
+    # Extract text (limit to first 300 pages / 200_000 chars to avoid memory blowups)
+    extracted = extract_text_from_pdf(file_path, max_pages=300, max_chars=200000)
+
+    # If extraction yields nothing, fall back to a short placeholder so import still works
+    if not extracted:
+        extracted = f"[Imported PDF: {filename}] — no extractable text found."
+
+    # If a DB is available try to find existing material and insert new; if not, fall back to returning extracted content
+    try:
+        existing = db.query(StudyMaterial).filter(StudyMaterial.title == title).first()
+        if existing:
+            return StudyMaterialResponse(
+                id=str(existing.id),
+                title=existing.title,
+                content=existing.content,
+                category=existing.category,
+                description=existing.description,
+                created_at=existing.created_at,
+                updated_at=existing.updated_at,
+            )
+
+        # Create StudyMaterial entry
+        # 'material' is either a DB-backed object (if commit succeeded) or a transient stub
+
+        return StudyMaterialResponse(
+            id=str(material.id),
+            title=material.title,
+            content=material.content,
+            category=material.category,
+            description=material.description,
+            created_at=material.created_at,
+            updated_at=material.updated_at,
+        )
+    except Exception:
+        # DB not available (or other DB error) — return fallback response using timestamps
+        return StudyMaterialResponse(
+            id=f"local-{filename}",
+            title=title,
+            content=extracted,
+            category='Textbook',
+            description=f'Imported from {filename} (not saved to DB in this environment)',
+            created_at=datetime.utcnow(),
+            updated_at=None,
         )
 
-@router.get("/search")
-async def search_study_materials(
-    query: str,
-    current_user: UserResponse = Depends(get_current_user)
+    # No DB/creation path left here — we already returned above on success or fallback
+
+
+@router.post('/textbooks/{filename}/generate')
+async def generate_from_textbook(
+    filename: str,
+    generate_summary: bool = True,
+    generate_flashcards: bool = True,
+    generate_quiz: bool = True,
+    num_flashcards: int = 10,
+    num_questions: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_optional_user),
+    settings = Depends(get_settings),
 ):
-    """Search study materials"""
+    """Import the PDF if necessary, then generate AI content from its text.
+
+    Returns a summary of generated objects and their database ids.
+    """
+    # Validate filename
+    if '/' in filename or '\\' in filename:
+        raise HTTPException(status_code=400, detail='Invalid filename')
+
+    if not filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail='Only PDF files are supported')
+
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+    textbooks_dir = os.path.join(repo_root, settings.TEXTBOOKS_FOLDER)
+    file_path = os.path.join(textbooks_dir, filename)
+
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail='Textbook not found')
+
+    title = os.path.splitext(filename)[0]
+
+    # Ensure material exists (DB may not be available)
     try:
-        if not query or len(query.strip()) < 2:
-            return {"materials": [], "flashcards": []}
-        
-        query_lower = query.lower()
-        
-        # Search in study materials
-        matching_materials = []
-        for material in STATIC_STUDY_MATERIALS:
-            if (query_lower in material["title"].lower() or 
-                query_lower in material["content"].lower() or 
-                query_lower in material["category"].lower()):
-                matching_materials.append(StudyMaterialResponse(
-                    id=material["id"],
-                    title=material["title"],
-                    content=material["content"],
-                    category=material["category"],
-                    description=material["description"],
-                    created_at="2024-01-01T00:00:00Z"
-                ))
-        
-        # Search in flashcards
-        matching_flashcards = []
-        for flashcard in STATIC_FLASHCARDS:
-            if (query_lower in flashcard["front"].lower() or 
-                query_lower in flashcard["back"].lower() or 
-                query_lower in flashcard["category"].lower()):
-                matching_flashcards.append(FlashcardResponse(
-                    id=flashcard["id"],
-                    front=flashcard["front"],
-                    back=flashcard["back"],
-                    category=flashcard["category"],
-                    difficulty=flashcard["difficulty"],
-                    created_at="2024-01-01T00:00:00Z"
-                ))
-        
-        return {
-            "materials": matching_materials,
-            "flashcards": matching_flashcards
-        }
-        
-    except Exception as e:
-        logger.error(f"Search error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Search failed"
+        material = db.query(StudyMaterial).filter(StudyMaterial.title == title).first()
+    except Exception:
+        material = None
+
+    if not material:
+        extracted = extract_text_from_pdf(file_path, max_pages=300, max_chars=200000)
+        if not extracted:
+            raise HTTPException(status_code=500, detail='Failed to extract text from PDF')
+
+        # try to persist material to DB but allow fallback
+        try:
+            material = StudyMaterial(
+                title=title,
+                content=extracted,
+                category='Textbook',
+                description=f'Imported from {filename}'
+            )
+            db.add(material)
+            db.commit()
+            db.refresh(material)
+        except Exception:
+            # leave material as a transient object-like dict
+            material = type('MaterialStub', (), {
+                'id': f'local-{filename}',
+                'title': title,
+                'content': extracted
+            })()
+
+        material = StudyMaterial(
+            title=title,
+            content=extracted,
+            category='Textbook',
+            description=f'Imported from {filename}'
         )
+        db.add(material)
+        db.commit()
+        db.refresh(material)
+
+    # Run AI generation
+    ollama = OllamaService(settings)
+
+    results = {}
+
+    if generate_summary:
+        summary = await ollama.summarize_content(material.content, max_length=300)
+        try:
+            ai_row = AIGeneratedContent(
+            source_type='textbook',
+            source_id=material.id,
+            content_type='summary',
+            title=f"Summary for {material.title}",
+            content=summary,
+            content_metadata={'filename': filename},
+            model_used=settings.OLLAMA_MODEL
+        )
+            db.add(ai_row)
+            db.commit()
+            db.refresh(ai_row)
+            results['summary'] = {'id': str(ai_row.id), 'content': summary}
+        except Exception:
+            results['summary'] = {'id': None, 'content': summary}
+
+    if generate_flashcards:
+        cards = await ollama.generate_flashcards(material.content, num_flashcards)
+        try:
+            ai_row = AIGeneratedContent(
+            source_type='textbook',
+            source_id=material.id,
+            content_type='flashcards',
+            title=f"Flashcards for {material.title}",
+            content=json.dumps(cards),
+            content_metadata={'filename': filename, 'num_cards': num_flashcards},
+            model_used=settings.OLLAMA_MODEL
+        )
+            db.add(ai_row)
+            db.commit()
+            db.refresh(ai_row)
+            results['flashcards'] = {'id': str(ai_row.id), 'count': len(cards), 'cards': cards}
+        except Exception:
+            results['flashcards'] = {'id': None, 'count': len(cards), 'cards': cards}
+
+    if generate_quiz:
+        questions = await ollama.generate_quiz_questions(material.content, num_questions)
+        try:
+            ai_row = AIGeneratedContent(
+            source_type='textbook',
+            source_id=material.id,
+            content_type='quiz',
+            title=f"Quiz for {material.title}",
+            content=json.dumps(questions),
+            content_metadata={'filename': filename, 'num_questions': num_questions},
+            model_used=settings.OLLAMA_MODEL
+        )
+            db.add(ai_row)
+            db.commit()
+            db.refresh(ai_row)
+            results['quiz'] = {'id': str(ai_row.id), 'count': len(questions), 'questions': questions}
+        except Exception:
+            results['quiz'] = {'id': None, 'count': len(questions), 'questions': questions}
+
+    return {'material_id': str(material.id), 'generated': results}

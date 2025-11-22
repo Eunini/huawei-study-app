@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # App Configuration
     APP_NAME: str = "Huawei ICT Cloud Track Study App"
     DEBUG: bool = True
+    # Local folder under the repository root where textbook PDF files live
+    TEXTBOOKS_FOLDER: str = "textbooks"
     
     class Config:
         env_file = ".env"

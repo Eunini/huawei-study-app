@@ -1,7 +1,7 @@
 import React from 'react'
 import { Clock } from 'lucide-react'
 
-export default function StudyMaterialDetail({ material, onBack }) {
+export default function StudyMaterialDetail({ material, onBack, onImport, onGenerate, aiResults }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -26,6 +26,22 @@ export default function StudyMaterialDetail({ material, onBack }) {
               {material.category}
             </span>
           </div>
+          {material.fileUrl && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => onImport && onImport(material)}
+                className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                Import (extract text)
+              </button>
+              <button
+                onClick={() => onGenerate && onGenerate(material)}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Import & Generate
+              </button>
+            </div>
+          )}
         </div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">
           {material.title}
@@ -39,11 +55,67 @@ export default function StudyMaterialDetail({ material, onBack }) {
         </div>
       </div>
       <div className="p-6">
-        <div className="prose prose-lg dark:prose-invert max-w-none">
-          <div className="whitespace-pre-line">
-            {material.content}
+        {material.fileUrl ? (
+          <div className="w-full h-[80vh]">
+            {/* Embed PDF in an iframe so users can view textbooks inline */}
+            <iframe
+              src={material.fileUrl}
+              title={material.title}
+              className="w-full h-full border rounded-md"
+            />
           </div>
-        </div>
+        ) : (
+          <div className="prose prose-lg dark:prose-invert max-w-none">
+            <div className="whitespace-pre-line">
+              {material.content}
+            </div>
+          </div>
+        )}
+
+        {/* AI Results (if any) */}
+        {aiResults && (
+          <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-2">Generated content</h3>
+            {aiResults.summary && (
+              <div className="mb-3">
+                <h4 className="font-medium">Summary</h4>
+                <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{aiResults.summary.content}</div>
+              </div>
+            )}
+
+            {aiResults.flashcards && (
+              <div className="mb-3">
+                <h4 className="font-medium">Flashcards</h4>
+                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                  {aiResults.flashcards.cards.map((c, i) => (
+                    <div key={i} className="p-2 border rounded">
+                      <div className="font-semibold">{c.front}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-line">{c.back}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {aiResults.quiz && (
+              <div>
+                <h4 className="font-medium">Quiz</h4>
+                <div className="space-y-3 mt-2">
+                  {aiResults.quiz.questions.map((q, i) => (
+                    <div key={i} className="p-2 border rounded">
+                      <div className="font-semibold">{q.question}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {q.options && q.options.map((opt, idx) => (
+                          <div key={idx} className={`py-0.5 ${q.correct_answer === idx ? 'text-green-700 font-medium' : ''}`}>{opt}</div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

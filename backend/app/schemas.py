@@ -16,22 +16,27 @@ class QuestionType(str, Enum):
 # User Models
 class UserBase(BaseModel):
     email: EmailStr
-    name: str
+    full_name: str
 
 class UserCreate(UserBase):
     password: str
 
 class UserUpdate(BaseModel):
-    name: Optional[str] = None
+    full_name: Optional[str] = None
     email: Optional[EmailStr] = None
 
 class UserResponse(UserBase):
     id: str
+    is_active: bool
     created_at: datetime
-    updated_at: Optional[datetime] = None
 
 # Auth Models
 class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+
+class LoginResponse(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
