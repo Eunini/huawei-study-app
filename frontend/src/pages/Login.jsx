@@ -1,11 +1,12 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
   const { signIn } = useAuth()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -59,6 +60,8 @@ export default function Login() {
       
       if (error) {
         setErrors({ general: error.message })
+      } else {
+        navigate('/')
       }
     } catch (error) {
       setErrors({ general: 'An unexpected error occurred' })

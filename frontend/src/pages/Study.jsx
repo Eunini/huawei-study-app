@@ -6,7 +6,6 @@ import StudyFilters from '../components/StudyFilters'
 import StudyMaterialCard from '../components/StudyMaterialCard'
 import StudyMaterialDetail from '../components/StudyMaterialDetail'
 import SearchResults from '../components/SearchResults'
-import { mockStudyMaterials, mockFlashcards } from '../data/mockData'
 
 export default function Study() {
   const [activeTab, setActiveTab] = useState('materials')
@@ -25,15 +24,13 @@ export default function Study() {
     setLoading(true)
 
     // Map backend textbooks (PDFs) into material entries so they're displayed in the materials grid
-    const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+    const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
 
     Promise.all([
-      // keep existing mock materials for offline/demo use
-      Promise.resolve(mockStudyMaterials),
-      Promise.resolve(mockFlashcards),
+      // Fetch real textbooks from backend
       fetch(`${API_BASE}/api/study/textbooks`).then(r => r.ok ? r.json() : [])
     ])
-      .then(([materials, cards, textbooks]) => {
+      .then(([textbooks]) => {
         // convert textbooks (pdfs) to material objects the UI understands
         const pdfMaterials = (textbooks || []).map((t, idx) => ({
           id: `pdf-${t.filename}-${idx}`,
@@ -47,8 +44,8 @@ export default function Study() {
           fileUrl: `${API_BASE}${t.url}`
         }))
 
-        setStudyMaterials([...pdfMaterials, ...materials])
-        setFlashcards(cards)
+        setStudyMaterials(pdfMaterials)
+        setFlashcards([])
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -85,7 +82,7 @@ export default function Study() {
     }
   }
 
-  const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+  const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
 
   async function handleImportMaterial(material) {
     if (!material.fileUrl) return

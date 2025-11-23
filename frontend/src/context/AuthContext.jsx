@@ -13,14 +13,8 @@ export const useAuth = () => {
 }
 
 export default function AuthProvider({ children }) {
-  const [user, setUser] = useState({
-    id: 'mock-user-id',
-    email: 'demo@example.com',
-    name: 'Demo User'
-  })
-  const [session, setSession] = useState({
-    user: { id: 'mock-user-id', email: 'demo@example.com' }
-  })
+  const [user, setUser] = useState(null)
+  const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(false)
 
   // For development - just use mock data
@@ -60,7 +54,7 @@ export default function AuthProvider({ children }) {
         setUser({
           id: 'mock-user-id',
           email: email,
-          name: 'Demo User'
+          name: 'Inioluwa Atanda'
         })
         setSession({
           user: { id: 'mock-user-id', email: email }

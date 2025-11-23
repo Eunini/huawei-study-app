@@ -8,114 +8,28 @@ const Results = () => {
   const [loading, setLoading] = useState(true)
 
   // Mock data for results dashboard
-  const mockResults = [
-    {
-      id: 1,
-      examType: 'HCIA Cloud Computing',
-      score: 750,
-      totalQuestions: 60,
-      correctAnswers: 45,
-      duration: 85,
-      date: '2024-12-15',
-      passed: true,
-      categoryScores: {
-        fundamentals: 80,
-        'deployment-models': 90,
-        'service-models': 75,
-        'huawei-services': 70,
-        architecture: 85,
-        storage: 88,
-        networking: 72,
-        security: 76
-      }
-    },
-    {
-      id: 2,
-      examType: 'HCIP Cloud Computing',
-      score: 620,
-      totalQuestions: 60,
-      correctAnswers: 37,
-      duration: 88,
-      date: '2024-12-10',
-      passed: true,
-      categoryScores: {
-        fundamentals: 70,
-        'deployment-models': 65,
-        'service-models': 80,
-        'huawei-services': 60,
-        architecture: 75,
-        storage: 82,
-        networking: 68,
-        security: 70
-      }
-    },
-    {
-      id: 3,
-      examType: 'HCIA Cloud Computing',
-      score: 580,
-      totalQuestions: 60,
-      correctAnswers: 35,
-      duration: 90,
-      date: '2024-12-05',
-      passed: false,
-      categoryScores: {
-        fundamentals: 65,
-        'deployment-models': 70,
-        'service-models': 60,
-        'huawei-services': 55,
-        architecture: 68,
-        storage: 75,
-        networking: 58,
-        security: 62
-      }
-    },
-    {
-      id: 4,
-      examType: 'HCIE Cloud Computing',
-      score: 720,
-      totalQuestions: 80,
-      correctAnswers: 58,
-      duration: 115,
-      date: '2024-11-28',
-      passed: true,
-      categoryScores: {
-        fundamentals: 85,
-        'deployment-models': 88,
-        'service-models': 78,
-        'huawei-services': 82,
-        architecture: 90,
-        storage: 86,
-        networking: 74,
-        security: 80
-      }
-    },
-    {
-      id: 5,
-      examType: 'HCIP Cloud Computing',
-      score: 550,
-      totalQuestions: 60,
-      correctAnswers: 33,
-      duration: 90,
-      date: '2024-11-20',
-      passed: false,
-      categoryScores: {
-        fundamentals: 60,
-        'deployment-models': 55,
-        'service-models': 65,
-        'huawei-services': 50,
-        architecture: 62,
-        storage: 70,
-        networking: 48,
-        security: 58
-      }
-    }
-  ]
+  const mockResults = []
 
   const [results] = useState(mockResults)
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setLoading(false), 1000)
+    // Fetch results from backend
+    const fetchResults = async () => {
+      try {
+        const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+        const response = await fetch(`${API_BASE}/results`)
+        if (response.ok) {
+          // const data = await response.json()
+          // TODO: Process and set results data when backend is implemented
+        }
+      } catch (error) {
+        console.error('Failed to fetch results:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchResults()
   }, [])
 
   // Filter results based on selected filters
